@@ -100,11 +100,46 @@ There is no .docx validator, so you must enforce control version integrity manua
 
 5. **If the user provides the original text, quote it back before editing.** This confirms you have the right control version before you start marking it up. If the user pastes a paragraph and says "improve this," your first output should be the original quoted back, then the redline.
 
+### Multi-Round Editing: Edit First, Redline Last
+
+The most common workflow is: the user works with Claude to improve a document over several rounds, THEN wants a clean redline at the end showing everything that changed from the original.
+
+**The rule: lock the original at the start, keep it untouched through all rounds, redline against it at the end.**
+
+**Step 1: Lock the original.**
+When the user first provides the document, immediately save it as the control version. In conversation, quote it back in a clearly labeled block:
+
+> **Original (control version — locked):**
+> [full text of the passage or document as provided]
+
+This block is the anchor. It does not change regardless of how many rounds of editing follow.
+
+**Step 2: Edit freely.**
+Work with the user to improve the text. Make changes, get feedback, revise again. During this phase, show the user clean text — not redlined text. They're in "editing mode," not "review mode." Each round produces a new clean draft.
+
+> **Draft v2:** [clean text after round 1 of edits]
+> **Draft v3:** [clean text after round 2 of edits]
+
+**Step 3: Produce the redline at the end.**
+When the user says "show me what changed," "redline it," "mark it up," or "let me see the final vs original" — produce a single redline comparing the **locked original** (from Step 1) against the **current final version** (latest draft). This is one redline, not a stack of incremental redlines.
+
+The output follows the standard format: Most Important Differences → Summary of Changes with page/paragraph refs → inline markup → clean version.
+
+**Critical: re-read the original from the locked block, not from memory.** After 3 rounds of editing, Claude's in-context memory of the original may have drifted. Go back to the "Original (control version — locked)" block and use that text verbatim for all deletions.
+
+**Step 4: If the user wants to see incremental changes.**
+Sometimes the user wants to see what changed between rounds (v2 → v3), not just original → final. If asked, produce both:
+- **Original → Final**: the full redline
+- **v2 → v3**: the incremental redline (treating v2 as the control version for this comparison)
+
+Label each clearly so the reader knows which baseline they're looking at.
+
 ### Control Version Anti-Patterns
 
 - **Paraphrasing inside deletions**: The struck-through text says "We'll spend $2.5M on tech" but the original said "The company will invest $2.5M in platform modernization during FY2026." This is a fabricated control version — the redline is useless.
 - **Silently fixing errors in the original**: If the original has "recieve," your deletion must show ~~recieve~~ not ~~receive~~. The correction is a separate tracked change: ~~recieve~~ **receive**.
 - **Omitting the control version entirely**: In email mode, jumping straight to the redline without establishing what the original text was. The reviewer has no way to verify the deletions are accurate.
+- **Letting the control version drift during multi-round editing**: After 3 rounds of changes, the "original" in Claude's memory may be a hybrid of the original and early drafts. Always re-read from the locked block, not from memory.
 
 ## Summary of Changes (Required)
 
